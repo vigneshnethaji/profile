@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vignesh Murugan | Architect & Lead Engineer</title>
+    
+    <!-- Google Fonts: Syncopate for massive bold headings, Inter for readable text -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Syncopate:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Syncopate', 'sans-serif'],
+                    },
+                    colors: {
+                        bgDark: '#030303',
+                        cyan: '#00f3ff',
+                        magenta: '#bc13fe',
+                        surface: '#111111',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- GSAP & Lenis for Advanced Parallax -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/studio-freight/lenis@1.0.29/bundled/lenis.min.js"></script>
+
+    <style>
+        /* Base Resets */
+        body, html {
+            margin: 0;
+            padding: 0;
+            background-color: #030303;
+            color: #ffffff;
+            overflow-x: hidden;
+            overscroll-behavior: none; /* Prevents bounce on mac */
+        }
+
+        /* Cinematic Noise Overlay */
+        .noise-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0.04;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+
+        /* Outline Text Effect */
+        .text-outline {
+            color: transparent;
+            -webkit-text-stroke: 1px rgba(255, 255, 255, 0.2);
+            transition: all 0.5s ease;
+        }
+        .text-outline:hover {
+            color: #00f3ff;
+            -webkit-text-stroke: 1px #00f3ff;
+            text-shadow: 0 0 20px rgba(0, 243, 255, 0.5);
+        }
+
+        /* Glassmorphism */
+        .glass-panel {
+            background: rgba(17, 17, 17, 0.4);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* Hide Scrollbar but keep functionality */
+        ::-webkit-scrollbar { display: none; }
+        
+        /* Custom Cursor */
+        .cursor-dot {
+            position: fixed;
+            top: 0; left: 0;
+            width: 8px; height: 8px;
+            background: #00f3ff;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 10000;
+            transform: translate(-50%, -50%);
+        }
+        .cursor-follower {
+            position: fixed;
+            top: 0; left: 0;
+            width: 40px; height: 40px;
+            border: 1px solid rgba(0, 243, 255, 0.5);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+            transition: width 0.3s, height 0.3s, background-color 0.3s;
+        }
+        .cursor-hover .cursor-follower {
+            width: 60px;
+            height: 60px;
+            background-color: rgba(0, 243, 255, 0.1);
+        }
+
+        /* 3D Tilt Card Base */
+        .tilt-card-wrapper {
+            perspective: 1000px;
+            transform-style: preserve-3d;
+        }
+
+        /* Abstract Glows */
+        .glow-blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            z-index: -1;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Cinematic Overlays -->
+    <div class="noise-overlay"></div>
+    <div class="cursor-dot hidden md:block"></div>
+    <div class="cursor-follower hidden md:block"></div>
+
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full z-50 p-6 mix-blend-difference">
+        <div class="flex justify-between items-center max-w-7xl mx-auto">
+            <div class="font-display font-bold text-xl tracking-tighter hoverable">VM.</div>
+            <div class="hidden md:flex gap-8 text-xs tracking-widest uppercase font-medium">
+                <a href="#about" class="hover:text-cyan transition hoverable">About</a>
+                <a href="#expertise" class="hover:text-cyan transition hoverable">Expertise</a>
+                <a href="#projects" class="hover:text-cyan transition hoverable">Work</a>
+                <a href="#contact" class="hover:text-cyan transition hoverable">Contact</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Background Elements (Parallaxed via JS) -->
+    <div class="fixed top-0 left-0 w-full h-full pointer-events-none z-[-2]">
+        <div class="glow-blob bg-cyan w-[40vw] h-[40vw] top-[-10%] left-[-10%] parallax-bg" data-speed="0.1"></div>
+        <div class="glow-blob bg-magenta w-[30vw] h-[30vw] bottom-[10%] right-[-5%] parallax-bg" data-speed="-0.15"></div>
+    </div>
+
+    <main id="smooth-wrapper">
+        <div id="smooth-content">
+
+            <!-- HERO SECTION: Split Text Parallax -->
+            <section class="h-screen w-full flex flex-col justify-center items-center relative overflow-hidden">
+                <div class="absolute inset-0 z-[-1] opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] parallax-bg" data-speed="0.05"></div>
+                
+                <div class="text-center z-10 w-full px-4">
+                    <p class="text-cyan text-sm md:text-base tracking-[0.3em] uppercase mb-4 opacity-0 hero-fade">Technical Lead & Solution Architect</p>
+                    
+                    <!-- Massive Text that splits on scroll -->
+                    <div class="font-display font-bold text-6xl md:text-[8vw] leading-[0.85] tracking-tighter flex flex-col items-center">
+                        <div class="hero-text-left text-outline w-full text-center md:text-left md:ml-[10vw]">VIGNESH</div>
+                        <div class="hero-text-right w-full text-center md:text-right md:mr-[10vw]">MURUGAN</div>
+                    </div>
+                </div>
+
+                <div class="absolute bottom-10 flex flex-col items-center gap-2 hero-fade">
+                    <span class="text-[10px] uppercase tracking-[0.2em] text-gray-500">Scroll to Explore</span>
+                    <div class="w-[1px] h-[50px] bg-gradient-to-b from-gray-500 to-transparent"></div>
+                </div>
+            </section>
+
+            <!-- ABOUT SECTION: Professional Image & Intro -->
+            <section id="about" class="min-h-screen py-24 relative flex items-center">
+                <div class="max-w-7xl mx-auto px-6 w-full">
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+                        
+                        <!-- Text Content -->
+                        <div class="lg:col-span-12">
+                            <h2 class="font-display text-4xl md:text-6xl font-bold mb-8 text-reveal">
+                                ARCHITECTING <br> <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan to-magenta">SCALABLE</span> SYSTEMS.
+                            </h2>
+                            <div class="space-y-6 text-gray-400 text-lg font-light leading-relaxed text-fade">
+                                <p>
+                                    I am a results-oriented Technical Lead and Full Stack Engineer dedicated to transforming complex business requirements into robust, high-performance applications. 
+                                </p>
+                                <p>
+                                    Specializing in <strong class="text-white font-medium">.NET 10, Node.js, Blazor, Angular, and Microservices</strong>, I direct engineering teams (15+ developers) to deliver 100% on-time deployments. My architectural focus spans Docker/Kubernetes containerization to cutting-edge AI integrations like OpenAI and RAG workflows.
+                                </p>
+                                <p>
+                                    From reducing system latency by 20% to architecting self-service Text2SQL AI platforms, I engineer solutions built for scale, security, and exceptional user experience.
+                                </p>
+                            </div>
+                            
+                            <!-- Stats -->
+                            <div class="grid grid-cols-2 md:grid-cols-3 gap-6 mt-12 pt-12 border-t border-white/10 text-fade">
+                                <div>
+                                    <h4 class="text-4xl font-display font-bold text-white mb-2">15<span class="text-cyan">+</span></h4>
+                                    <p class="text-xs text-gray-500 uppercase tracking-widest">Developers Mentored</p>
+                                </div>
+                                <div>
+                                    <h4 class="text-4xl font-display font-bold text-white mb-2">100<span class="text-magenta">%</span></h4>
+                                    <p class="text-xs text-gray-500 uppercase tracking-widest">On-Time Delivery</p>
+                                </div>
+                                <div>
+                                    <h4 class="text-4xl font-display font-bold text-white mb-2">20<span class="text-cyan">%</span></h4>
+                                    <p class="text-xs text-gray-500 uppercase tracking-widest">Latency Reduction</p>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </section>
+
+            <!-- EXPERTISE / SKILLS SECTION -->
+            <section id="expertise" class="py-24 relative z-10 border-y border-white/5 bg-gradient-to-b from-transparent to-surface/20">
+                <div class="max-w-7xl mx-auto px-6">
+                    <h2 class="font-display text-3xl md:text-5xl font-bold mb-16 text-center text-outline tracking-wider">TECH ARSENAL</h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        <!-- Backend -->
+                        <div class="expertise-card glass-panel p-8 rounded-3xl hover:-translate-y-2 transition-transform duration-500 shadow-2xl shadow-cyan/5 border border-white/5 relative overflow-hidden group">
+                            <div class="absolute inset-0 bg-gradient-to-br from-cyan/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                            <i class="fas fa-server text-cyan text-4xl mb-6 drop-shadow-[0_0_10px_rgba(0,243,255,0.5)]"></i>
+                            <h4 class="text-white font-display text-xl mb-3 relative z-10">Backend & Architecture</h4>
+                            <p class="text-gray-400 font-light text-sm mb-6 relative z-10">Scalable microservices, REST APIs, and event-driven architectures.</p>
+                            <div class="flex flex-wrap gap-2 relative z-10">
+                                <span class="px-3 py-1.5 bg-cyan/10 border border-cyan/20 rounded-md text-xs text-cyan font-medium">.NET 10 / C#</span>
+                                <span class="px-3 py-1.5 bg-green-500/10 border border-green-500/20 rounded-md text-xs text-green-400 font-medium">Node.js</span>
+                                <span class="px-3 py-1 bg-white/5 border border-white/10 rounded-md text-xs text-gray-300">SQL Server</span>
+                                <span class="px-3 py-1 bg-white/5 border border-white/10 rounded-md text-xs text-gray-300">MongoDB</span>
+                                <span class="px-3 py-1 bg-white/5 border border-white/10 rounded-md text-xs text-gray-300">Redis</span>
+                            </div>
+                        </div>
+
+                        <!-- Frontend -->
+                        <div class="expertise-card glass-panel p-8 rounded-3xl hover:-translate-y-2 transition-transform duration-500 shadow-2xl shadow-magenta/5 border border-white/5 relative overflow-hidden group">
+                            <div class="absolute inset-0 bg-gradient-to-br from-magenta/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                            <i class="fas fa-laptop-code text-magenta text-4xl mb-6 drop-shadow-[0_0_10px_rgba(188,19,254,0.5)]"></i>
+                            <h4 class="text-white font-display text-xl mb-3 relative z-10">Frontend Engineering</h4>
+                            <p class="text-gray-400 font-light text-sm mb-6 relative z-10">Modern, responsive, and highly interactive user interfaces.</p>
+                            <div class="flex flex-wrap gap-2 relative z-10">
+                                <span class="px-3 py-1.5 bg-magenta/10 border border-magenta/20 rounded-md text-xs text-magenta font-medium">Angular 20+</span>
+                                <span class="px-3 py-1.5 bg-purple-500/10 border border-purple-500/20 rounded-md text-xs text-purple-400 font-medium">Blazor</span>
+                                <span class="px-3 py-1 bg-white/5 border border-white/10 rounded-md text-xs text-gray-300">React</span>
+                                <span class="px-3 py-1 bg-white/5 border border-white/10 rounded-md text-xs text-gray-300">HTML5 / CSS3</span>
+                            </div>
+                        </div>
+
+                        <!-- DevOps / Cloud -->
+                        <div class="expertise-card glass-panel p-8 rounded-3xl hover:-translate-y-2 transition-transform duration-500 shadow-2xl shadow-orange-500/5 border border-white/5 relative overflow-hidden group">
+                            <div class="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                            <i class="fas fa-cloud text-orange-400 text-4xl mb-6 drop-shadow-[0_0_10px_rgba(249,115,22,0.5)]"></i>
+                            <h4 class="text-white font-display text-xl mb-3 relative z-10">Cloud, DevOps & AI</h4>
+                            <p class="text-gray-400 font-light text-sm mb-6 relative z-10">Containerization, automated pipelines, and advanced AI agent integrations.</p>
+                            <div class="flex flex-wrap gap-2 relative z-10">
+                                <span class="px-3 py-1.5 bg-orange-500/10 border border-orange-500/20 rounded-md text-xs text-orange-400 font-medium">GenAI & RAG</span>
+                                <span class="px-3 py-1.5 bg-yellow-500/10 border border-yellow-500/20 rounded-md text-xs text-yellow-400 font-medium">Agentic AI</span>
+                                <span class="px-3 py-1.5 bg-blue-500/10 border border-blue-500/20 rounded-md text-xs text-blue-400 font-medium">Docker / K8s</span>
+                                <span class="px-3 py-1 bg-white/5 border border-white/10 rounded-md text-xs text-gray-300">MCP</span>
+                                <span class="px-3 py-1 bg-white/5 border border-white/10 rounded-md text-xs text-gray-300">Azure / AWS</span>
+                                <span class="px-3 py-1 bg-white/5 border border-white/10 rounded-md text-xs text-gray-300">CI/CD</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VERTICAL 3D TILT PROJECTS SECTION -->
+            <section id="projects" class="py-32 relative bg-bgDark z-10">
+                <div class="max-w-7xl mx-auto px-6">
+                    
+                    <!-- Intro -->
+                    <div class="mb-24 md:mb-32 flex flex-col md:flex-row md:items-end justify-between gap-8">
+                        <div>
+                            <h2 class="font-display text-5xl md:text-8xl text-outline mb-4">SELECTED <br>WORKS</h2>
+                            <p class="text-gray-400 max-w-md text-lg font-light">Architectural solutions integrating AI, Microservices, and Edge Computing built for extreme scale.</p>
+                        </div>
+                        <div class="flex items-center gap-4 text-cyan animate-pulse">
+                            <span class="uppercase tracking-widest text-xs">Explore Below</span>
+                            <i class="fas fa-arrow-down"></i>
+                        </div>
+                    </div>
+
+                    <!-- Projects Vertical List -->
+                    <div class="flex flex-col gap-32">
+                        
+                        <!-- Project 1 -->
+                        <div class="project-panel flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
+                            <!-- Text Content (Left) -->
+                            <div class="w-full lg:w-5/12 relative z-10">
+                                <div class="text-[140px] font-display font-bold text-white/5 absolute -top-20 -left-10 select-none parallax-element" data-speed="0.4">01</div>
+                                <h4 class="text-cyan text-sm tracking-widest uppercase mb-4">Enterprise AI Platform</h4>
+                                <h3 class="font-display text-4xl md:text-5xl font-bold text-white mb-6">Prophet21 <br>Integration Hub</h3>
+                                <p class="text-gray-300 text-lg font-light mb-8 leading-relaxed">
+                                    Architected a self-service Text2SQL platform enabling natural language data querying. Designed RAG workflows with Azure OpenAI and MongoDB vector embeddings for context-aware semantic retrieval.
+                                </p>
+                                <div class="flex flex-wrap gap-3">
+                                    <span class="px-4 py-2 rounded-full border border-white/20 text-xs text-white bg-black/50 backdrop-blur-md">.NET 10</span>
+                                    <span class="px-4 py-2 rounded-full border border-white/20 text-xs text-white bg-black/50 backdrop-blur-md">Azure OpenAI</span>
+                                    <span class="px-4 py-2 rounded-full border border-white/20 text-xs text-white bg-black/50 backdrop-blur-md">Vector Search</span>
+                                </div>
+                            </div>
+                            
+                            <!-- 3D Card Visual (Right) - Text2SQL Mockup -->
+                            <div class="w-full lg:w-7/12 tilt-card-wrapper hoverable">
+                                <div class="tilt-card w-full h-[400px] md:h-[450px] relative preserve-3d cursor-crosshair">
+                                    <div class="absolute inset-0 bg-[#0d1117] backdrop-blur-xl rounded-[2rem] border border-white/10 overflow-hidden flex flex-col shadow-2xl">
+                                        <!-- Mockup Header -->
+                                        <div class="h-10 bg-white/5 border-b border-white/10 flex items-center px-4 gap-2">
+                                            <div class="w-3 h-3 rounded-full bg-red-500/80"></div>
+                                            <div class="w-3 h-3 rounded-full bg-yellow-500/80"></div>
+                                            <div class="w-3 h-3 rounded-full bg-green-500/80"></div>
+                                            <span class="ml-4 text-xs text-gray-400 font-mono">Text2SQL_Agent.exe</span>
+                                        </div>
+                                        <!-- Mockup Body -->
+                                        <div class="flex-1 p-6 flex flex-col gap-4 relative">
+                                            <!-- User Input -->
+                                            <div class="self-start bg-white/10 rounded-2xl rounded-tl-none p-3 max-w-[85%] transform translate-z-[40px] border border-white/5">
+                                                <p class="text-sm text-gray-200">"Retrieve the top 5 underperforming assets for Q3."</p>
+                                            </div>
+                                            <!-- AI Processing Status -->
+                                            <div class="flex items-center gap-2 text-cyan text-[11px] font-mono ml-4 transform translate-z-[50px]">
+                                                <i class="fas fa-circle-notch fa-spin"></i> Context retrieval via MongoDB Vector Search...
+                                            </div>
+                                            <!-- SQL Output -->
+                                            <div class="self-end bg-black/80 border border-cyan/30 rounded-xl p-4 w-full transform translate-z-[80px] shadow-2xl shadow-cyan/10">
+                                                <div class="flex justify-between items-center mb-3 border-b border-white/10 pb-2">
+                                                    <span class="text-xs text-cyan font-mono"><i class="fas fa-database mr-1"></i> Generated Endpoint</span>
+                                                    <span class="text-[10px] text-green-400 bg-green-400/10 px-2 py-1 rounded">200 OK - 0.12s</span>
+                                                </div>
+                                                <pre class="text-[12px] text-gray-300 font-mono leading-loose"><span class="text-magenta">SELECT</span> TOP 5 asset_id, perf_score 
+<span class="text-magenta">FROM</span> prophet21_assets
+<span class="text-magenta">WHERE</span> quarter = <span class="text-green-300">'Q3'</span>
+<span class="text-magenta">ORDER BY</span> perf_score <span class="text-cyan">ASC</span>;</pre>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Project 2 (OneWireless - NEW) -->
+                        <div class="project-panel flex flex-col lg:flex-row-reverse items-center gap-12 lg:gap-20">
+                            <!-- Text Content (Right) -->
+                            <div class="w-full lg:w-5/12 relative z-10 lg:pl-10">
+                                <div class="text-[140px] font-display font-bold text-white/5 absolute -top-20 -right-10 select-none parallax-element" data-speed="0.4">02</div>
+                                <h4 class="text-orange-400 text-sm tracking-widest uppercase mb-4">Industrial Wireless Infrastructure</h4>
+                                <h3 class="font-display text-4xl md:text-5xl font-bold text-white mb-6">OneWireless <br>WDM Modernization</h3>
+                                <p class="text-gray-300 text-lg font-light mb-8 leading-relaxed">
+                                    Led the technical team working closely with the client to architect and scale a legacy Silverlight application into a high-performance modern web platform. Increased device management capacity by <strong>20x (from 400 to 8,000+ devices)</strong> utilizing an asynchronous Node.js backend and real-time industrial protocol integrations (OPC UA, Modbus TCP).
+                                </p>
+                                <div class="flex flex-wrap gap-3">
+                                    <span class="px-4 py-2 rounded-full border border-white/20 text-xs text-white bg-black/50 backdrop-blur-md">Node.js</span>
+                                    <span class="px-4 py-2 rounded-full border border-white/20 text-xs text-white bg-black/50 backdrop-blur-md">Modern Web</span>
+                                    <span class="px-4 py-2 rounded-full border border-white/20 text-xs text-white bg-black/50 backdrop-blur-md">Event-Driven Arch</span>
+                                </div>
+                            </div>
+                            
+                            <!-- 3D Card Visual (Left) - WDM Network Dashboard Mockup -->
+                            <div class="w-full lg:w-7/12 tilt-card-wrapper hoverable">
+                                <div class="tilt-card w-full h-[400px] md:h-[450px] relative preserve-3d cursor-crosshair">
+                                    <div class="absolute inset-0 bg-[#0f172a] backdrop-blur-xl rounded-[2rem] border border-white/10 overflow-hidden flex flex-col shadow-2xl">
+                                        <!-- Header -->
+                                        <div class="h-10 bg-white/5 border-b border-white/10 flex items-center px-4 justify-between">
+                                            <span class="text-xs text-orange-400 font-mono"><i class="fas fa-wifi mr-2"></i>WDM Gateway Central</span>
+                                            <span class="text-[10px] bg-green-500/20 text-green-400 border border-green-500/30 px-2 py-0.5 rounded">Node.js Active</span>
+                                        </div>
+                                        <!-- Body -->
+                                        <div class="flex-1 flex p-5 gap-5 relative">
+                                            <!-- Sidebar Stats -->
+                                            <div class="w-1/3 flex flex-col gap-4 transform translate-z-[30px]">
+                                                <div class="bg-white/5 p-4 rounded-xl border border-white/5 shadow-lg">
+                                                    <div class="text-[10px] text-gray-400 uppercase tracking-wide">Device Capacity</div>
+                                                    <div class="text-3xl font-display text-white mt-1">8,241</div>
+                                                    <div class="text-[10px] text-green-400 mt-2 font-mono"><i class="fas fa-arrow-up mr-1"></i>20x Scale (was 400)</div>
+                                                </div>
+                                                <div class="bg-white/5 p-4 rounded-xl border border-white/5 flex-1 shadow-lg">
+                                                    <div class="text-[10px] text-gray-400 uppercase tracking-wide mb-3">Protocols</div>
+                                                    <div class="flex flex-col gap-3 text-xs font-mono text-gray-300">
+                                                        <div class="flex justify-between items-center"><span>OPC UA</span><i class="fas fa-circle text-[8px] text-green-400 shadow-[0_0_5px_#4ade80]"></i></div>
+                                                        <div class="flex justify-between items-center"><span>Modbus</span><i class="fas fa-circle text-[8px] text-green-400 shadow-[0_0_5px_#4ade80]"></i></div>
+                                                        <div class="flex justify-between items-center text-gray-500"><span>HART-IP</span><i class="fas fa-circle text-[8px] text-orange-400 shadow-[0_0_5px_#f97316]"></i></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <!-- Network Topology -->
+                                            <div class="flex-1 bg-black/40 rounded-xl border border-white/10 relative overflow-hidden transform translate-z-[60px] flex items-center justify-center shadow-inner">
+                                                <div class="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,rgba(249,115,22,0.2)_0%,transparent_70%)]"></div>
+                                                <!-- Central Node -->
+                                                <div class="w-10 h-10 rounded-lg bg-orange-500 shadow-[0_0_20px_rgba(249,115,22,0.6)] z-10 flex items-center justify-center text-white text-lg">
+                                                    <i class="fas fa-server"></i>
+                                                </div>
+                                                <!-- Orbiting Rings -->
+                                                <svg class="absolute inset-0 w-full h-full pointer-events-none">
+                                                    <circle cx="50%" cy="50%" r="25%" stroke="rgba(255,255,255,0.15)" stroke-width="1" fill="none" stroke-dasharray="4"/>
+                                                    <circle cx="50%" cy="50%" r="40%" stroke="rgba(255,255,255,0.05)" stroke-width="1" fill="none" stroke-dasharray="4"/>
+                                                    <!-- Connection Lines -->
+                                                    <line x1="50%" y1="50%" x2="20%" y2="30%" stroke="#f97316" stroke-width="1.5" stroke-dasharray="3" opacity="0.6"/>
+                                                    <line x1="50%" y1="50%" x2="80%" y2="25%" stroke="#f97316" stroke-width="1.5" stroke-dasharray="3" opacity="0.8"/>
+                                                    <line x1="50%" y1="50%" x2="70%" y2="80%" stroke="#f97316" stroke-width="1.5" stroke-dasharray="3" opacity="0.4"/>
+                                                    <line x1="50%" y1="50%" x2="25%" y2="75%" stroke="#f97316" stroke-width="1.5" stroke-dasharray="3" opacity="0.7"/>
+                                                </svg>
+                                                <!-- Remote Field Devices -->
+                                                <div class="absolute top-[28%] left-[18%] w-3 h-3 bg-white rounded-full shadow-[0_0_8px_#fff]"></div>
+                                                <div class="absolute top-[23%] left-[78%] w-4 h-4 bg-green-400 rounded-full shadow-[0_0_12px_#4ade80] animate-pulse"></div>
+                                                <div class="absolute top-[78%] left-[68%] w-2 h-2 bg-white rounded-full shadow-[0_0_5px_#fff]"></div>
+                                                <div class="absolute top-[73%] left-[23%] w-3 h-3 bg-white rounded-full shadow-[0_0_8px_#fff]"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Project 3 (RTLS - Shifted) -->
+                        <div class="project-panel flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
+                            <!-- Text Content (Left) -->
+                            <div class="w-full lg:w-5/12 relative z-10">
+                                <div class="text-[140px] font-display font-bold text-white/5 absolute -top-20 -left-10 select-none parallax-element" data-speed="0.4">03</div>
+                                <h4 class="text-magenta text-sm tracking-widest uppercase mb-4">IoT Tracking Solution</h4>
+                                <h3 class="font-display text-4xl md:text-5xl font-bold text-white mb-6">Real Time <br>Location System</h3>
+                                <p class="text-gray-300 text-lg font-light mb-8 leading-relaxed">
+                                    Architected a containerized microservices real-time tracking solution handling high-volume data streams (1,000+ points/sec), improving client asset tracking accuracy by 95%.
+                                </p>
+                                <div class="flex flex-wrap gap-3">
+                                    <span class="px-4 py-2 rounded-full border border-white/20 text-xs text-white bg-black/50 backdrop-blur-md">.NET Core API</span>
+                                    <span class="px-4 py-2 rounded-full border border-white/20 text-xs text-white bg-black/50 backdrop-blur-md">Docker & K8s</span>
+                                    <span class="px-4 py-2 rounded-full border border-white/20 text-xs text-white bg-black/50 backdrop-blur-md">MongoDB</span>
+                                </div>
+                            </div>
+                            
+                            <!-- 3D Card Visual (Right) - IoT Dashboard Mockup -->
+                            <div class="w-full lg:w-7/12 tilt-card-wrapper hoverable">
+                                <div class="tilt-card w-full h-[400px] md:h-[450px] relative preserve-3d cursor-crosshair">
+                                    <div class="absolute inset-0 bg-[#0a0f16] backdrop-blur-xl rounded-[2rem] border border-white/10 overflow-hidden flex flex-col shadow-2xl">
+                                         <!-- Dashboard Header -->
+                                        <div class="h-12 bg-white/5 border-b border-white/10 flex items-center justify-between px-6">
+                                            <span class="text-xs text-magenta font-mono uppercase tracking-widest"><i class="fas fa-satellite-dish mr-2"></i> RTLS Command</span>
+                                            <div class="flex gap-4 text-[10px] text-gray-400 font-mono">
+                                                <span><i class="fas fa-circle text-green-500 mr-1 animate-pulse"></i> K8s Cluster Active</span>
+                                            </div>
+                                        </div>
+                                        <!-- Dashboard Body -->
+                                        <div class="flex-1 p-6 flex flex-col gap-4 relative">
+                                            <!-- Stats Row -->
+                                            <div class="flex gap-4 transform translate-z-[40px]">
+                                                <div class="flex-1 bg-white/5 rounded-xl p-4 border border-white/5">
+                                                    <div class="text-[10px] text-gray-500 uppercase mb-1">Ingestion Stream</div>
+                                                    <div class="text-2xl font-display text-white">1,240 <span class="text-xs text-gray-400">pts/sec</span></div>
+                                                </div>
+                                                <div class="flex-1 bg-white/5 rounded-xl p-4 border border-white/5">
+                                                    <div class="text-[10px] text-gray-500 uppercase mb-1">API Latency</div>
+                                                    <div class="text-2xl font-display text-green-400">12ms <span class="text-xs text-gray-400">avg</span></div>
+                                                </div>
+                                            </div>
+                                            <!-- Visual Map -->
+                                            <div class="flex-1 relative bg-black/40 rounded-xl border border-white/5 overflow-hidden transform translate-z-[70px] flex items-center justify-center">
+                                                 <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+                                                 <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(188,19,254,0.1)_0%,transparent_70%)]"></div>
+                                                 <!-- Nodes -->
+                                                 <div class="relative w-full h-full">
+                                                     <!-- Central Hub -->
+                                                     <div class="absolute top-[50%] left-[50%] -translate-x-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full shadow-[0_0_20px_#fff] z-10"></div>
+                                                     <!-- Tracking Assets -->
+                                                     <div class="absolute top-[25%] left-[30%] w-2 h-2 bg-magenta rounded-full shadow-[0_0_10px_#bc13fe] animate-ping"></div>
+                                                     <div class="absolute top-[70%] left-[65%] w-2 h-2 bg-cyan rounded-full shadow-[0_0_10px_#00f3ff] animate-ping" style="animation-delay: 0.5s;"></div>
+                                                     <div class="absolute top-[35%] left-[75%] w-2 h-2 bg-magenta rounded-full shadow-[0_0_10px_#bc13fe]"></div>
+                                                     
+                                                     <!-- Connection Lines -->
+                                                     <svg class="absolute inset-0 w-full h-full opacity-40 pointer-events-none">
+                                                         <line x1="30%" y1="25%" x2="50%" y2="50%" stroke="#bc13fe" stroke-width="1.5" stroke-dasharray="4" />
+                                                         <line x1="65%" y1="70%" x2="50%" y2="50%" stroke="#00f3ff" stroke-width="1.5" stroke-dasharray="4" />
+                                                         <line x1="75%" y1="35%" x2="50%" y2="50%" stroke="#bc13fe" stroke-width="1.5" stroke-dasharray="4" />
+                                                     </svg>
+                                                 </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Project 4 (RAIDER - Shifted) -->
+                        <div class="project-panel flex flex-col lg:flex-row-reverse items-center gap-12 lg:gap-20">
+                            <!-- Text Content (Right) -->
+                            <div class="w-full lg:w-5/12 relative z-10 lg:pl-10">
+                                <div class="text-[140px] font-display font-bold text-white/5 absolute -top-20 -right-10 select-none parallax-element" data-speed="0.4">04</div>
+                                <h4 class="text-cyan text-sm tracking-widest uppercase mb-4">Developer Tools</h4>
+                                <h3 class="font-display text-4xl md:text-5xl font-bold text-white mb-6">RAIDER <br>Code Intelligence</h3>
+                                <p class="text-gray-300 text-lg font-light mb-8 leading-relaxed">
+                                    Integrated Monaco Editor with custom Language Server Protocol providers. Streamlined the manufacturing edge developer experience, increasing efficiency by an estimated 80%.
+                                </p>
+                                <div class="flex flex-wrap gap-3">
+                                    <span class="px-4 py-2 rounded-full border border-white/20 text-xs text-white bg-black/50 backdrop-blur-md">.NET/C#</span>
+                                    <span class="px-4 py-2 rounded-full border border-white/20 text-xs text-white bg-black/50 backdrop-blur-md">Monaco Editor</span>
+                                    <span class="px-4 py-2 rounded-full border border-white/20 text-xs text-white bg-black/50 backdrop-blur-md">Language Server</span>
+                                </div>
+                            </div>
+                            
+                            <!-- 3D Card Visual (Left) - IDE Mockup -->
+                            <div class="w-full lg:w-7/12 tilt-card-wrapper hoverable">
+                                <div class="tilt-card w-full h-[400px] md:h-[450px] relative preserve-3d cursor-crosshair">
+                                    <div class="absolute inset-0 bg-[#1e1e1e] backdrop-blur-xl rounded-[2rem] border border-white/10 overflow-hidden flex flex-col shadow-2xl">
+                                        <!-- IDE Header -->
+                                        <div class="h-10 bg-[#2d2d2d] border-b border-black/50 flex items-center px-4 gap-2">
+                                            <i class="fas fa-microchip text-cyan text-sm"></i>
+                                            <span class="ml-2 text-xs text-gray-300 font-mono">MotorControl.st - RAIDER IDE</span>
+                                        </div>
+                                        <!-- IDE Body -->
+                                        <div class="flex-1 flex relative">
+                                            <!-- Sidebar -->
+                                            <div class="w-12 md:w-16 bg-[#252526] border-r border-black/50 flex flex-col items-center py-6 gap-6 text-gray-500 transform translate-z-[20px]">
+                                                <i class="fas fa-file-code text-white"></i>
+                                                <i class="fas fa-search hover:text-white transition cursor-pointer"></i>
+                                                <i class="fas fa-code-branch hover:text-white transition cursor-pointer"></i>
+                                            </div>
+                                            <!-- Code Area -->
+                                            <div class="flex-1 p-6 bg-[#1e1e1e] font-mono text-[12px] md:text-[14px] leading-loose transform translate-z-[60px]">
+                                                <p class="text-gray-400 mb-2"><span class="text-[#569cd6]">PROGRAM</span> MotorControl</p>
+                                                <p class="text-gray-400"><span class="text-[#569cd6]">VAR</span></p>
+                                                <p class="pl-6 text-gray-400">StartCmd : <span class="text-[#4ec9b0]">BOOL</span>;</p>
+                                                <p class="pl-6 text-gray-400 mb-2">DriveSpeed : <span class="text-[#4ec9b0]">REAL</span> := <span class="text-[#b5cea8]">0.0</span>;</p>
+                                                <p class="text-gray-400 mb-4"><span class="text-[#569cd6]">END_VAR</span></p>
+                                                
+                                                <p class="text-[#6a9955] mb-2">(* Main Execution Logic *)</p>
+                                                <p><span class="text-[#c586c0]">IF</span> StartCmd <span class="text-[#569cd6]">AND NOT</span> FaultActive <span class="text-[#c586c0]">THEN</span></p>
+                                                
+                                                <div class="pl-6 relative inline-block w-full mt-2">
+                                                    <span class="text-[#9cdcfe]">DriveSpeed</span> := <span class="text-[#b5cea8]">1500.0</span>; <span class="text-[#6a9955]">(* Set init<span class="animate-pulse bg-white/50 w-2 h-4 inline-block align-middle ml-[2px]"></span> *)</span>
+                                                    
+                                                    <!-- Intellisense Popup (LSP) -->
+                                                    <div class="absolute left-10 top-8 bg-[#252526] border border-white/20 rounded-md shadow-2xl shadow-black w-56 z-20 transform translate-z-[30px] overflow-hidden">
+                                                        <div class="px-3 py-1.5 flex items-center gap-3 bg-[#062f4a] cursor-pointer">
+                                                            <i class="fas fa-wrench text-[#4ec9b0] text-[10px]"></i> 
+                                                            <span class="text-white text-xs">SetInitialVelocity(REAL)</span>
+                                                        </div>
+                                                        <div class="px-3 py-1.5 flex items-center gap-3 hover:bg-white/5 cursor-pointer text-gray-400 border-t border-white/5">
+                                                            <i class="fas fa-wrench text-[#4ec9b0] text-[10px]"></i> 
+                                                            <span class="text-xs">SetInitialTorque(REAL)</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <p class="mt-8"><span class="text-[#c586c0]">END_IF</span>;</p>
+                                                <p><span class="text-[#569cd6]">END_PROGRAM</span></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </section>
+
+            <!-- FOOTER / CONTACT -->
+            <footer id="contact" class="min-h-[80vh] flex flex-col justify-center relative overflow-hidden bg-bgDark">
+                <div class="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+                
+                <div class="max-w-7xl mx-auto px-6 w-full text-center z-10 py-24">
+                    <p class="text-cyan tracking-[0.3em] uppercase text-sm mb-6">Ready to scale?</p>
+                    <h2 class="font-display text-5xl md:text-8xl font-bold mb-12 hoverable transition-transform hover:scale-105 duration-500 cursor-pointer">
+                        <a href="mailto:off.vignesh@gmail.com" class="text-white hover:text-outline transition-colors">LET'S BUILD <br>TOGETHER.</a>
+                    </h2>
+                    
+                    <div class="flex flex-col md:flex-row justify-center items-center gap-8 md:gap-16 mb-20 text-lg">
+                        <a href="mailto:off.vignesh@gmail.com" class="flex items-center gap-3 hover:text-cyan transition hoverable">
+                            <i class="far fa-envelope"></i> off.vignesh@gmail.com
+                        </a>
+                        <a href="tel:+918807997660" class="flex items-center gap-3 hover:text-cyan transition hoverable">
+                            <i class="fas fa-mobile-alt"></i> +91 8807997660
+                        </a>
+                        <div class="flex gap-6">
+                            <a href="#" class="hover:text-cyan transition hoverable text-2xl"><i class="fab fa-github"></i></a>
+                            <a href="#" class="hover:text-cyan transition hoverable text-2xl"><i class="fab fa-linkedin-in"></i></a>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col md:flex-row justify-between items-center border-t border-white/10 pt-8 text-gray-500 text-sm">
+                        <p>Education: M.Sc. Computer Science (2016-2020)</p>
+                        <p>&copy; 2026 Vignesh Murugan. Engineered for performance.</p>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Core Interactions Scripts -->
+    <script>
+        // Ensure GSAP Plugins are registered
+        gsap.registerPlugin(ScrollTrigger);
+
+        // 1. Initialize Lenis for Smooth Scrolling
+        const lenis = new Lenis({
+            duration: 1.2,
+            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+            direction: 'vertical',
+            gestureDirection: 'vertical',
+            smooth: true,
+            mouseMultiplier: 1,
+            smoothTouch: false,
+            touchMultiplier: 2,
+            infinite: false,
+        });
+
+        // Integrate Lenis with GSAP ScrollTrigger
+        lenis.on('scroll', ScrollTrigger.update);
+        gsap.ticker.add((time) => {
+            lenis.raf(time * 1000);
+        });
+        gsap.ticker.lagSmoothing(0);
+
+        // 2. Custom Cursor Logic
+        const cursorDot = document.querySelector('.cursor-dot');
+        const cursorFollower = document.querySelector('.cursor-follower');
+        const hoverables = document.querySelectorAll('.hoverable, a, button');
+
+        if(window.innerWidth > 768) {
+            let mouseX = window.innerWidth / 2;
+            let mouseY = window.innerHeight / 2;
+            let dotX = mouseX;
+            let dotY = mouseY;
+            let folX = mouseX;
+            let folY = mouseY;
+
+            window.addEventListener('mousemove', (e) => {
+                mouseX = e.clientX;
+                mouseY = e.clientY;
+            });
+
+            // RAF loop for smooth cursor easing
+            function updateCursor() {
+                dotX += (mouseX - dotX) * 0.5;
+                dotY += (mouseY - dotY) * 0.5;
+                folX += (mouseX - folX) * 0.15;
+                folY += (mouseY - folY) * 0.15;
+
+                cursorDot.style.left = dotX + 'px';
+                cursorDot.style.top = dotY + 'px';
+                cursorFollower.style.left = folX + 'px';
+                cursorFollower.style.top = folY + 'px';
+                
+                requestAnimationFrame(updateCursor);
+            }
+            updateCursor();
+
+            hoverables.forEach(el => {
+                el.addEventListener('mouseenter', () => document.body.classList.add('cursor-hover'));
+                el.addEventListener('mouseleave', () => document.body.classList.remove('cursor-hover'));
+            });
+        }
+
+        // 3. Setup GSAP Animations
+        window.addEventListener("load", () => {
+            
+            // Background Parallax Items
+            gsap.utils.toArray('.parallax-bg').forEach(bg => {
+                const speed = bg.dataset.speed;
+                gsap.to(bg, {
+                    yPercent: -100 * speed,
+                    ease: "none",
+                    scrollTrigger: {
+                        trigger: "body",
+                        start: "top top",
+                        end: "bottom bottom",
+                        scrub: true
+                    }
+                });
+            });
+
+            // Hero Section Animations
+            const heroTl = gsap.timeline({
+                scrollTrigger: {
+                    trigger: "header",
+                    start: "top top",
+                    end: "bottom top",
+                    scrub: 1
+                }
+            });
+
+            heroTl.to('.hero-text-left', { xPercent: -50, opacity: 0 }, 0)
+                  .to('.hero-text-right', { xPercent: 50, opacity: 0 }, 0)
+                  .to('.hero-fade', { opacity: 0, y: -50 }, 0);
+
+            // Entry Animation
+            gsap.fromTo('.hero-fade', {opacity: 0, y: 30}, {opacity: 1, y: 0, duration: 1, stagger: 0.2, ease: "power3.out", delay: 0.5});
+            gsap.fromTo('.hero-text-left, .hero-text-right', {y: 100, opacity: 0}, {y: 0, opacity: 1, duration: 1.5, ease: "expo.out"});
+
+            // Image Internal Parallax (Subtle zoom out on scroll)
+            gsap.to('.image-reveal img', {
+                scale: 1.15,
+                ease: "none",
+                scrollTrigger: {
+                    trigger: ".image-reveal",
+                    start: "top bottom",
+                    end: "bottom top",
+                    scrub: true
+                }
+            });
+
+            // General Element Parallax (Floating Numbers, Badges)
+            gsap.utils.toArray('.parallax-element').forEach(el => {
+                gsap.to(el, {
+                    y: -50 * el.dataset.speed,
+                    ease: "none",
+                    scrollTrigger: {
+                        trigger: el,
+                        start: "top bottom",
+                        end: "bottom top",
+                        scrub: true
+                    }
+                });
+            });
+
+            // Expertise Cards Stagger
+            gsap.from(".expertise-card", {
+                scrollTrigger: {
+                    trigger: "#expertise",
+                    start: "top 80%",
+                },
+                y: 50,
+                opacity: 0,
+                duration: 1,
+                stagger: 0.2,
+                ease: "power3.out"
+            });
+
+            // Projects Vertical Fade In
+            gsap.utils.toArray(".project-panel").forEach(panel => {
+                gsap.from(panel, {
+                    opacity: 0,
+                    y: 80,
+                    duration: 1.2,
+                    ease: "power3.out",
+                    scrollTrigger: {
+                        trigger: panel,
+                        start: "top 80%",
+                    }
+                });
+            });
+
+            // 3D Tilt Effect for Project Cards
+            if (window.matchMedia("(pointer: fine)").matches) {
+                document.querySelectorAll('.tilt-card').forEach(card => {
+                    card.addEventListener('mousemove', e => {
+                        const rect = card.getBoundingClientRect();
+                        const x = e.clientX - rect.left;
+                        const y = e.clientY - rect.top;
+                        
+                        const centerX = rect.width / 2;
+                        const centerY = rect.height / 2;
+                        
+                        // Calculate rotation angles (max 10 degrees)
+                        const rotateX = ((y - centerY) / centerY) * -10;
+                        const rotateY = ((x - centerX) / centerX) * 10;
+                        
+                        gsap.to(card, {
+                            rotateX: rotateX,
+                            rotateY: rotateY,
+                            transformPerspective: 1000,
+                            ease: "power2.out",
+                            duration: 0.4
+                        });
+                        
+                        // Shift inner contents slightly for deeper 3D feel
+                        gsap.to(card.querySelectorAll('[class*="translate-z"]'), {
+                            x: (x - centerX) * 0.05,
+                            y: (y - centerY) * 0.05,
+                            ease: "power2.out",
+                            duration: 0.4
+                        });
+                    });
+                    
+                    card.addEventListener('mouseleave', () => {
+                        gsap.to(card, {
+                            rotateX: 0,
+                            rotateY: 0,
+                            ease: "elastic.out(1, 0.5)",
+                            duration: 1.2
+                        });
+                        gsap.to(card.querySelectorAll('[class*="translate-z"]'), {
+                            x: 0,
+                            y: 0,
+                            ease: "elastic.out(1, 0.5)",
+                            duration: 1.2
+                        });
+                    });
+                });
+            }
+        });
+    </script>
+</body>
+</html>
